@@ -1,0 +1,23 @@
+services:
+  stackchan-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stackchan-bridge
+    restart: unless-stopped
+    network_mode: host
+    env_file:
+      - .env
+    extra_hosts:
+      - "host.docker.internal:127.0.0.1"
+    volumes:
+      - stackchan_data:/app/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8765/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+volumes:
+  stackchan_data:

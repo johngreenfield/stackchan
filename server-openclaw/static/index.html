@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stack-chan × OpenClaw Remote</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --panel: #181c26;
+      --panel-2: #202634;
+      --border: #2c3446;
+      --text: #e8ecf4;
+      --muted: #9aa5b8;
+      --accent: #38bdf8;
+      --accent-2: #6366f1;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.45;
+    }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 20px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--err);
+    }
+    .dot.ok { background: var(--ok); }
+    .dot.warn { background: var(--warn); }
+
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #f8fafc;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.88rem;
+      color: var(--muted);
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    button {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, transform 0.05s;
+    }
+    button:hover {
+      background: #293143;
+      border-color: #46526d;
+    }
+    button:active { transform: translateY(1px); }
+    button.primary {
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      border-color: transparent;
+      color: #fff;
+      font-weight: 600;
+    }
+    button.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent) inset;
+    }
+    .grid-btns {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(105px, 1fr));
+      gap: 8px;
+    }
+    .led-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.35);
+      flex-shrink: 0;
+    }
+    .camera-box {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      background: #090b10;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    .camera-box img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+    .chat-log {
+      height: 250px;
+      overflow-y: auto;
+      background: #0c0f15;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    .msg {
+      padding: 8px 10px;
+      border-radius: 8px;
+      max-width: 92%;
+    }
+    .msg.user {
+      align-self: flex-end;
+      background: #1d2b44;
+      border: 1px solid #2b4269;
+    }
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+    }
+    .msg .meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    form.chat-form {
+      display: flex;
+      gap: 8px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background: #0c0f15;
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 0.92rem;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">🤖 Stack-chan × OpenClaw Web Remote</div>
+    <div class="badges">
+      <span class="badge"><span id="dot-openclaw" class="dot"></span>OpenClaw Gateway</span>
+      <span class="badge"><span id="dot-xiaozhi" class="dot"></span>XiaoZhi Voice WS (<span id="cnt-xiaozhi">0</span>)</span>
+      <span class="badge"><span id="dot-avatar" class="dot"></span>Avatar Device WS (<span id="cnt-avatar">0</span>)</span>
+      <span class="badge"><span id="dot-remote" class="dot"></span>Remote Link</span>
+      <span class="badge" style="gap:4px;padding:3px 8px;">
+        <input id="bridge-token" type="password" placeholder="Bridge token" style="width:130px;background:transparent;border:none;color:var(--text);font-size:0.8rem;outline:none;" />
+        <button type="button" onclick="saveTokenAndReconnect()" style="padding:2px 8px;font-size:0.75rem;">Connect</button>
+      </span>
+    </div>
+  </header>
+
+  <main>
+    <!-- Head Pan / Tilt -->
+    <section class="card">
+      <h2>Head Motion (Pan &amp; Tilt)</h2>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Pan (Yaw): <strong id="yaw-val">0°</strong></span>
+          <span>-128° .. +128°</span>
+        </div>
+        <input id="yaw" type="range" min="-128" max="128" value="0" />
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Tilt (Pitch): <strong id="pitch-val">15°</strong></span>
+          <span>3° .. 87°</span>
+        </div>
+        <input id="pitch" type="range" min="3" max="87" value="15" />
+      </div>
+      <div class="slider-group">
+        <div class="slider-label">
+          <span>Servo Speed: <strong id="speed-val">150</strong></span>
+          <span>100 .. 1000</span>
+        </div>
+        <input id="speed" type="range" min="100" max="1000" step="10" value="150" />
+      </div>
+      <div class="row">
+        <button onclick="setPose(0, 15)">Center</button>
+        <button onclick="setPose(-35, 20)">Look Left</button>
+        <button onclick="setPose(35, 20)">Look Right</button>
+        <button onclick="setPose(0, 45)">Look Up</button>
+        <button onclick="setPose(0, 5)">Look Down</button>
+      </div>
+    </section>
+
+    <!-- Expressions & LEDs -->
+    <section class="card">
+      <h2>Avatar Expression &amp; LEDs</h2>
+      <div class="grid-btns" id="emotion-buttons">
+        <button data-emo="neutral" onclick="setEmotion('neutral')">🙂 Neutral</button>
+        <button data-emo="happy" onclick="setEmotion('happy')">😄 Happy</button>
+        <button data-emo="sad" onclick="setEmotion('sad')">😢 Sad</button>
+        <button data-emo="angry" onclick="setEmotion('angry')">😠 Angry</button>
+        <button data-emo="surprised" onclick="setEmotion('surprised')">😮 Surprised</button>
+        <button data-emo="thinking" onclick="setEmotion('thinking')">🤔 Thinking</button>
+        <button data-emo="sleepy" onclick="setEmotion('sleepy')">😴 Sleepy</button>
+        <button data-emo="doubtful" onclick="setEmotion('doubtful')">🤨 Doubtful</button>
+      </div>
+      <div>
+        <div class="slider-label" style="margin-bottom:8px;"><span>Onboard RGB LEDs</span></div>
+        <div class="row">
+          <button class="led-btn" onclick="setLed(0, 120, 168)"><span class="swatch" style="background:#0099ff"></span>Cyan</button>
+          <button class="led-btn" onclick="setLed(0, 168, 50)"><span class="swatch" style="background:#00d240"></span>Green</button>
+          <button class="led-btn" onclick="setLed(168, 90, 0)"><span class="swatch" style="background:#ff8800"></span>Amber</button>
+          <button class="led-btn" onclick="setLed(168, 0, 0)"><span class="swatch" style="background:#ff2222"></span>Red</button>
+          <button class="led-btn" onclick="setLed(120, 0, 168)"><span class="swatch" style="background:#aa00ff"></span>Purple</button>
+          <button class="led-btn" onclick="setLed(100, 100, 100)"><span class="swatch" style="background:#dddddd"></span>White</button>
+          <button class="led-btn" onclick="setLed(0, 0, 0)"><span class="swatch" style="background:#111"></span>Off</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Camera Stream -->
+    <section class="card">
+      <h2>
+        <span>Camera Stream</span>
+        <span class="row">
+          <button onclick="cameraCmd('start')">Start</button>
+          <button onclick="cameraCmd('stop')">Stop</button>
+        </span>
+      </h2>
+      <div class="camera-box">
+        <img id="cam-img" alt="Stack-chan live camera" />
+        <span id="cam-placeholder">No camera frame yet (start stream when Stack-chan Avatar WS is online)</span>
+      </div>
+    </section>
+
+    <!-- Chat & Speak -->
+    <section class="card">
+      <h2>Chat &amp; Speak via OpenClaw</h2>
+      <div id="chat-log" class="chat-log"></div>
+      <form class="chat-form" onsubmit="sendChat(event)">
+        <input id="chat-input" type="text" placeholder="Ask Stack-chan anything..." autocomplete="off" />
+        <button class="primary" type="submit">Send &amp; Speak</button>
+      </form>
+    </section>
+  </main>
+
+  <script>
+    const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenInput = document.getElementById("bridge-token");
+    const initialToken = urlParams.get("token") || localStorage.getItem("stackchan_bridge_token") || "";
+    if (tokenInput && initialToken) {
+      tokenInput.value = initialToken;
+    }
+
+    function getAuthToken() {
+      return (tokenInput ? tokenInput.value.trim() : "") || urlParams.get("token") || "";
+    }
+
+    function buildWsUrl() {
+      const token = getAuthToken();
+      const base = `${wsProto}//${window.location.host}/stackChan/ws?deviceType=WebRemote`;
+      return token ? `${base}&token=${encodeURIComponent(token)}` : base;
+    }
+
+    function apiFetch(url, options = {}) {
+      const token = getAuthToken();
+      const headers = new Headers(options.headers || {});
+      if (token) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
+      return fetch(url, { ...options, headers });
+    }
+
+    function saveTokenAndReconnect() {
+      const token = getAuthToken();
+      if (token) {
+        localStorage.setItem("stackchan_bridge_token", token);
+      } else {
+        localStorage.removeItem("stackchan_bridge_token");
+      }
+      clearTimeout(reconnectTimer);
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+      connectWS();
+      pollStatus();
+    }
+
+    let ws = null;
+    let reconnectTimer = null;
+    let currentJpegUrl = null;
+    let motionTimer = null;
+    const pendingLocalChats = new Set();
+
+    const yawEl = document.getElementById("yaw");
+    const pitchEl = document.getElementById("pitch");
+    const speedEl = document.getElementById("speed");
+
+    function updateSlidersUI() {
+      document.getElementById("yaw-val").textContent = `${yawEl.value}°`;
+      document.getElementById("pitch-val").textContent = `${pitchEl.value}°`;
+      document.getElementById("speed-val").textContent = speedEl.value;
+    }
+
+    yawEl.addEventListener("input", () => { updateSlidersUI(); scheduleMotion(); });
+    pitchEl.addEventListener("input", () => { updateSlidersUI(); scheduleMotion(); });
+    speedEl.addEventListener("input", updateSlidersUI);
+
+    function scheduleMotion() {
+      clearTimeout(motionTimer);
+      motionTimer = setTimeout(() => {
+        postMotion(Number(yawEl.value), Number(pitchEl.value), Number(speedEl.value));
+      }, 60);
+    }
+
+    function setPose(yaw, pitch) {
+      yawEl.value = yaw;
+      pitchEl.value = pitch;
+      updateSlidersUI();
+      postMotion(yaw, pitch, Number(speedEl.value));
+    }
+
+    async function postMotion(yaw, pitch, speed) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const payload = JSON.stringify({
+          yawServo: { angle: yaw * 10, speed },
+          pitchServo: { angle: pitch * 10, speed }
+        });
+        ws.send(packBinaryFrame(0x04, new TextEncoder().encode(payload)));
+        return;
+      }
+      await apiFetch("/api/motion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ yaw, pitch, speed })
+      }).catch(() => {});
+    }
+
+    async function setEmotion(emotion) {
+      document.querySelectorAll("#emotion-buttons button").forEach((b) => {
+        b.classList.toggle("active", b.dataset.emo === emotion);
+      });
+      await apiFetch("/api/avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emotion })
+      }).catch(() => {});
+    }
+
+    async function setLed(r, g, b) {
+      await apiFetch("/api/led", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ r, g, b })
+      }).catch(() => {});
+    }
+
+    async function cameraCmd(action) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        ws.send(packBinaryFrame(action === "start" ? 0x05 : 0x06, new Uint8Array(0)));
+        return;
+      }
+      await apiFetch(`/api/camera/${action}`, { method: "POST" }).catch(() => {});
+    }
+
+    function packBinaryFrame(type, payloadBytes) {
+      const buf = new ArrayBuffer(5 + payloadBytes.length);
+      const view = new DataView(buf);
+      view.setUint8(0, type);
+      view.setUint32(1, payloadBytes.length, false);
+      new Uint8Array(buf, 5).set(payloadBytes);
+      return buf;
+    }
+
+    function appendChat(role, text, metaText = "") {
+      const log = document.getElementById("chat-log");
+      const div = document.createElement("div");
+      div.className = `msg ${role}`;
+      div.textContent = text;
+      if (metaText) {
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = metaText;
+        div.appendChild(meta);
+      }
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function formatChatMeta(data) {
+      const dir = (data && data.directive) || {};
+      return [
+        dir.emotion ? `emotion: ${dir.emotion}` : "",
+        dir.yaw !== undefined ? `yaw: ${dir.yaw}°` : "",
+        dir.pitch !== undefined ? `pitch: ${dir.pitch}°` : "",
+        data && data.audio_played_on_device ? "spoken on Stack-chan" : "text reply"
+      ].filter(Boolean).join(" · ");
+    }
+
+    async function sendChat(ev) {
+      ev.preventDefault();
+      const input = document.getElementById("chat-input");
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = "";
+      pendingLocalChats.add(text);
+      appendChat("user", text);
+
+      try {
+        const res = await apiFetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
+        if (!res.ok) {
+          pendingLocalChats.delete(text);
+          const err = await res.text();
+          appendChat("bot", `Error: ${err}`);
+          return;
+        }
+        const data = await res.json();
+        appendChat("bot", data.reply_text, formatChatMeta(data));
+      } catch (e) {
+        pendingLocalChats.delete(text);
+        appendChat("bot", `Request failed: ${e}`);
+      }
+    }
+
+    function applyStatus(s) {
+      if (!s) return;
+      document.getElementById("dot-openclaw").className = `dot ${s.openclaw_connected ? "ok" : ""}`;
+      document.getElementById("dot-xiaozhi").className = `dot ${s.xiaozhi_clients > 0 ? "ok" : "warn"}`;
+      document.getElementById("cnt-xiaozhi").textContent = s.xiaozhi_clients ?? 0;
+      document.getElementById("dot-avatar").className = `dot ${s.stackchan_clients > 0 ? "ok" : "warn"}`;
+      document.getElementById("cnt-avatar").textContent = s.stackchan_clients ?? 0;
+    }
+
+    function connectWS() {
+      ws = new WebSocket(buildWsUrl());
+      ws.binaryType = "arraybuffer";
+      ws.onopen = () => {
+        document.getElementById("dot-remote").className = "dot ok";
+        ws.send(JSON.stringify({ type: "get_status" }));
+      };
+      ws.onclose = () => {
+        document.getElementById("dot-remote").className = "dot";
+        reconnectTimer = setTimeout(connectWS, 2000);
+      };
+      ws.onmessage = (ev) => {
+        if (typeof ev.data === "string") {
+          try {
+            const msg = JSON.parse(ev.data);
+            if (msg.type === "status") {
+              applyStatus(msg.data);
+            } else if (msg.type === "chat_log" && msg.data) {
+              if (msg.data.user_text && msg.data.reply_text) {
+                if (pendingLocalChats.has(msg.data.user_text)) {
+                  pendingLocalChats.delete(msg.data.user_text);
+                } else {
+                  appendChat("user", msg.data.user_text);
+                  appendChat("bot", msg.data.reply_text, formatChatMeta(msg.data));
+                }
+              }
+            }
+          } catch (_) {}
+        } else if (ev.data instanceof ArrayBuffer) {
+          const view = new DataView(ev.data);
+          if (ev.data.byteLength < 5) return;
+          const type = view.getUint8(0);
+          const len = view.getUint32(1, false);
+          const payload = new Uint8Array(ev.data, 5, Math.min(len, ev.data.byteLength - 5));
+          if (type === 0x02 && payload.length > 0) {
+            const blob = new Blob([payload], { type: "image/jpeg" });
+            const url = URL.createObjectURL(blob);
+            const img = document.getElementById("cam-img");
+            img.src = url;
+            img.style.display = "block";
+            document.getElementById("cam-placeholder").style.display = "none";
+            if (currentJpegUrl) URL.revokeObjectURL(currentJpegUrl);
+            currentJpegUrl = url;
+          } else if (type === 0x17 || type === 0x16) {
+            ws.send(JSON.stringify({ type: "get_status" }));
+          }
+        }
+      };
+    }
+
+    async function pollStatus() {
+      try {
+        const res = await apiFetch("/api/status");
+        if (res.ok) applyStatus(await res.json());
+      } catch (_) {}
+    }
+
+    updateSlidersUI();
+    connectWS();
+    setInterval(pollStatus, 5000);
+  </script>
+</body>
+</html>

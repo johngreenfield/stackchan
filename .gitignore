@@ -1,0 +1,33 @@
+.DS_Store
+.idea/
+
+# Environment & secrets
+.env
+**/.env
+firmware/main/stackchan_config.h
+
+# Build & release artifacts
+dist/
+*.bin
+!firmware/main/assets/**/*.bin
+sdkconfig.old
+firmware/build*/
+firmware/managed_components/
+firmware/components/
+firmware/xiaozhi-esp32/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/sdkconfig.defaults.local
+firmware/*.log
+app/android/local.properties
+app/.dart_tool/
+app/build/
+app/.flutter-plugins-dependencies
+app/pubspec.lock
+
+AUDIT_REPORT.md
+
+# Python artifacts
+server-openclaw/**/__pycache__/
+**/__pycache__/
+*.py[cod]
